@@ -1,16 +1,58 @@
-# React + Vite
+﻿# MielWeb
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sitio web para la presentación y promoción de productos de miel natural.
 
-Currently, two official plugins are available:
+## Tecnologías
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React
+- Vite
+- JavaScript
+- CSS
 
-## React Compiler
+## Requisitos
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js
+- npm
+- Git
 
-## Expanding the ESLint configuration
+## Instalación
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Clona el repositorio y entra en la carpeta del proyecto:
+
+```bash
+git clone https://github.com/k4m1lo69/mielWeb.git
+cd mielWeb
+npm install
+```
+
+## Desarrollo
+
+Inicia el servidor de desarrollo:
+
+```bash
+npm run dev
+```
+
+## Validación
+
+Construye la versión de producción:
+
+```bash
+npm run build
+```
+
+Revisa el código con ESLint:
+
+```bash
+npm run lint
+```
+
+## Estado del proyecto
+
+La página inicial está en desarrollo. Los precios y los datos de contacto
+son provisionales. El carrito de compras, los pedidos y los pagos todavía
+no están implementados.
+
+## Repositorio
+
+https://github.com/k4m1lo69/mielWeb
