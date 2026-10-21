@@ -1,33 +1,112 @@
+﻿import { useState } from "react";
 import "./App.css";
 
-const  productos = [
+const WHATSAPP = "56941946907";
+
+const productos = [
   {
     id: 1,
     nombre: "Miel Multiflora",
-    formato: "500g",
+    formato: "500 g",
     precio: 5000,
-    descripcion: "Miel de flores variadas, ideal para endulzar tus bebidas y postres.",
-    emojin: "🍯" ,
+    descripcion: "Miel de flores variadas, ideal para bebidas y postres.",
+    emoji: "🍯",
   },
   {
     id: 2,
     nombre: "Miel de Ulmo",
-    formato: "500g",
+    formato: "500 g",
     precio: 6000,
-    descripcion: "Miel de Ulmo, con un sabor único y propiedades medicinales.",
-    emojin: "🌿", 
+    descripcion: "Miel de aroma intenso y sabor característico.",
+    emoji: "🌿",
   },
   {
     id: 3,
     nombre: "Miel de Quillay",
-    formato: "500g",
+    formato: "500 g",
     precio: 5500,
-    descripcion: "Miel de Quillay, con un sabor suave y delicado.",
-    emojin: "🌸", 
+    descripcion: "Una miel de sabor suave para disfrutar cada día.",
+    emoji: "🌼",
   },
 ];
 
+const formatoPrecio = (precio) =>
+  precio.toLocaleString("es-CL", {
+    style: "currency",
+    currency: "CLP",
+    maximumFractionDigits: 0,
+  });
+
 function App() {
+  const [carrito, setCarrito] = useState([]);
+
+  const agregarAlCarrito = (producto) => {
+    setCarrito((actual) => {
+      const existe = actual.find((item) => item.id === producto.id);
+
+      if (existe) {
+        return actual.map((item) =>
+          item.id === producto.id
+            ? { ...item, cantidad: item.cantidad + 1 }
+            : item
+        );
+      }
+
+      return [...actual, { ...producto, cantidad: 1 }];
+    });
+  };
+
+  const cambiarCantidad = (id, cambio) => {
+    setCarrito((actual) =>
+      actual
+        .map((item) =>
+          item.id === id
+            ? { ...item, cantidad: item.cantidad + cambio }
+            : item
+        )
+        .filter((item) => item.cantidad > 0)
+    );
+  };
+
+  const eliminarDelCarrito = (id) => {
+    setCarrito((actual) => actual.filter((item) => item.id !== id));
+  };
+
+  const cantidadTotal = carrito.reduce(
+    (total, item) => total + item.cantidad,
+    0
+  );
+
+  const precioTotal = carrito.reduce(
+    (total, item) => total + item.precio * item.cantidad,
+    0
+  );
+
+  const prepararPedidoWhatsApp = () => {
+    if (carrito.length === 0) return;
+
+    const lineasPedido = carrito.map(
+      (item) =>
+        `- ${item.nombre} (${item.formato}) x ${item.cantidad}: ${formatoPrecio(
+          item.precio * item.cantidad
+        )}`
+    );
+
+    const mensaje = [
+      "¡Hola! Quiero consultar por este pedido de MielWeb:",
+      "",
+      ...lineasPedido,
+      "",
+      `Total de productos: ${cantidadTotal}`,
+      `Total estimado: ${formatoPrecio(precioTotal)}`,
+      "",
+      "Quisiera confirmar disponibilidad y coordinar la entrega.",
+    ].join("\n");
+
+    const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <>
       <header className="encabezado">
@@ -43,8 +122,8 @@ function App() {
           <a href="#contacto">Contacto</a>
         </nav>
 
-        <a className="boton boton-pequeno" href="#productos">
-          Ver productos
+        <a className="boton boton-pequeno boton-carrito" href="#carrito">
+          🛒 Carrito ({cantidadTotal})
         </a>
       </header>
 
@@ -52,11 +131,9 @@ function App() {
         <section className="portada" id="inicio">
           <div className="portada-contenido">
             <span className="etiqueta">UN REGALO DE LA NATURALEZA</span>
-
             <h1>
               El dulce sabor de lo <span>natural</span>
             </h1>
-
             <p>
               Descubre nuestra selección de miel y disfruta un producto
               ideal para acompañar tus momentos especiales.
@@ -99,7 +176,6 @@ function App() {
               <p>Para acompañar tu mesa.</p>
             </div>
           </article>
-
           <article>
             <span>🍯</span>
             <div>
@@ -107,7 +183,6 @@ function App() {
               <p>Opciones para cada ocasión.</p>
             </div>
           </article>
-
           <article>
             <span>📦</span>
             <div>
@@ -120,8 +195,8 @@ function App() {
         <section className="seccion-productos" id="productos">
           <div className="titulo-seccion">
             <span className="etiqueta">NUESTRA SELECCIÓN</span>
-            <h2>Productos destacados</h2>
-            <p>Encuentra tu formato favorito.</p>
+            <h2>Nuestras mieles</h2>
+            <p>Elige tus productos y agrégalos al carrito.</p>
           </div>
 
           <div className="rejilla-productos">
@@ -137,19 +212,15 @@ function App() {
                   <p>{producto.descripcion}</p>
 
                   <div className="producto-pie">
-                    <strong>
-                      {producto.precio.toLocaleString("es-CL", {
-                        style: "currency",
-                        currency: "CLP",
-                        maximumFractionDigits: 0,
-                      })}
-                    </strong>
-                    <a
-                      href="#contacto"
-                      aria-label={`Consultar por ${producto.nombre}`}
+                    <strong>{formatoPrecio(producto.precio)}</strong>
+                    <button
+                      className="boton boton-agregar"
+                      type="button"
+                      onClick={() => agregarAlCarrito(producto)}
+                      aria-label={`Agregar ${producto.nombre} al carrito`}
                     >
-                      Consultar →
-                    </a>
+                      + Agregar
+                    </button>
                   </div>
                 </div>
               </article>
@@ -157,9 +228,99 @@ function App() {
           </div>
 
           <p className="nota-precios">
-            Precios de ejemplo para el diseño. Confirma los formatos,
-            valores y disponibilidad antes de publicar la tienda.
+            Precios de ejemplo. Confirma los valores, formatos y disponibilidad
+            antes de publicar la tienda.
           </p>
+        </section>
+
+        <section className="seccion-carrito" id="carrito">
+          <div className="titulo-seccion">
+            <span className="etiqueta">TU SELECCIÓN</span>
+            <h2>Carrito de compras</h2>
+            <p>Revisa tu pedido antes de contactarnos por WhatsApp.</p>
+          </div>
+
+          {carrito.length === 0 ? (
+            <div className="carrito-vacio">
+              <span aria-hidden="true">🧺</span>
+              <h3>Tu carrito está vacío</h3>
+              <p>Agrega tus mieles favoritas para preparar tu pedido.</p>
+              <a className="boton" href="#productos">
+                Ver productos
+              </a>
+            </div>
+          ) : (
+            <>
+              <div className="lista-carrito">
+                {carrito.map((item) => (
+                  <article className="item-carrito" key={item.id}>
+                    <span className="carrito-emoji" aria-hidden="true">
+                      {item.emoji}
+                    </span>
+
+                    <div className="carrito-detalle">
+                      <h3>{item.nombre}</h3>
+                      <p>
+                        {item.formato} · {formatoPrecio(item.precio)} por unidad
+                      </p>
+                      <strong>
+                        {formatoPrecio(item.precio * item.cantidad)}
+                      </strong>
+                    </div>
+
+                    <div
+                      className="control-cantidad"
+                      aria-label={`Cantidad de ${item.nombre}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => cambiarCantidad(item.id, -1)}
+                        aria-label={`Disminuir cantidad de ${item.nombre}`}
+                      >
+                        −
+                      </button>
+                      <span>{item.cantidad}</span>
+                      <button
+                        type="button"
+                        onClick={() => cambiarCantidad(item.id, 1)}
+                        aria-label={`Aumentar cantidad de ${item.nombre}`}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <button
+                      className="boton-eliminar"
+                      type="button"
+                      onClick={() => eliminarDelCarrito(item.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </article>
+                ))}
+              </div>
+
+              <div className="resumen-carrito">
+                <p>
+                  Cantidad total de productos: <strong>{cantidadTotal}</strong>
+                </p>
+                <p className="total-carrito">
+                  Total estimado: <strong>{formatoPrecio(precioTotal)}</strong>
+                </p>
+                <p className="aviso-carrito">
+                  El precio no incluye envío. La disponibilidad y la entrega
+                  se confirman por WhatsApp.
+                </p>
+                <button
+                  className="boton boton-whatsapp"
+                  type="button"
+                  onClick={prepararPedidoWhatsApp}
+                >
+                  Enviar pedido por WhatsApp ↗
+                </button>
+              </div>
+            </>
+          )}
         </section>
 
         <section className="historia" id="nosotros">
@@ -171,32 +332,32 @@ function App() {
             <h2>Una propuesta inspirada en la naturaleza</h2>
             <p>
               Queremos acercarte al mundo de la miel con una experiencia
-              sencilla, cálida y cercana. Conoce nuestros productos y
-              consulta por el formato que buscas.
+              sencilla, cálida y cercana. Elige tus productos y conversemos
+              para coordinar tu pedido.
             </p>
-            <a className="enlace-secundario" href="#contacto">
-              Hablemos de tu pedido →
+            <a className="enlace-secundario" href="#productos">
+              Conoce nuestras mieles →
             </a>
           </div>
         </section>
 
         <section className="contacto" id="contacto">
           <span className="etiqueta">ESTAMOS PARA AYUDARTE</span>
-          <h2>¿Te gustaría hacer un pedido?</h2>
+          <h2>¿Tienes alguna consulta?</h2>
           <p>
-            Escríbenos para consultar precios, disponibilidad y opciones
-            de entrega.
+            Escríbenos por WhatsApp para consultar precios, disponibilidad y
+            opciones de entrega.
           </p>
           <a
-            className="boton"
-            href="mailto:contacto@mielweb.cl?subject=Consulta%20por%20miel"
+            className="boton boton-whatsapp"
+            href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(
+              "¡Hola! Quisiera consultar por los productos de MielWeb."
+            )}`}
+            target="_blank"
+            rel="noreferrer"
           >
-            Consultar por correo
+            Consultar por WhatsApp ↗
           </a>
-          <small>
-            El correo es provisional. Reemplázalo por el correo real
-            del negocio antes de publicar.
-          </small>
         </section>
       </main>
 
