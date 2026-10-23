@@ -1,9 +1,10 @@
 ﻿import { useState } from "react";
 import "./App.css";
+import AdminPanel from "./components/AdminPanel";
 
 const WHATSAPP = "56941946907";
 
-const productos = [
+const productosIniciales = [
   {
     id: 1,
     nombre: "Miel Multiflora",
@@ -39,6 +40,8 @@ const formatoPrecio = (precio) =>
 
 function App() {
   const [carrito, setCarrito] = useState([]);
+  const [productos, setProductos] = useState(productosIniciales);
+  const [mostrarAdmin, setMostrarAdmin] = useState(false);
 
   const agregarAlCarrito = (producto) => {
     setCarrito((actual) => {
@@ -68,8 +71,36 @@ function App() {
     );
   };
 
-  const eliminarDelCarrito = (id) => {
-    setCarrito((actual) => actual.filter((item) => item.id !== id));
+  const agregarProducto = (producto) => {
+    setProductos((actuales) => [...actuales, producto]);
+  };
+
+  const actualizarProducto = (productoActualizado) => {
+    setProductos((actuales) =>
+      actuales.map((producto) =>
+        producto.id === productoActualizado.id
+          ? productoActualizado
+          : producto
+      )
+    );
+
+    setCarrito((actuales) =>
+      actuales.map((item) =>
+        item.id === productoActualizado.id
+          ? { ...item, ...productoActualizado }
+          : item
+      )
+    );
+  };
+
+  const eliminarProducto = (id) => {
+    setProductos((actuales) =>
+      actuales.filter((producto) => producto.id !== id)
+    );
+
+    setCarrito((actuales) =>
+      actuales.filter((item) => item.id !== id)
+    );
   };
 
   const cantidadTotal = carrito.reduce(
@@ -122,9 +153,19 @@ function App() {
           <a href="#contacto">Contacto</a>
         </nav>
 
-        <a className="boton boton-pequeno boton-carrito" href="#carrito">
-          🛒 Carrito ({cantidadTotal})
-        </a>
+        <div className="acciones-encabezado">
+          <button
+            className="boton boton-pequeno"
+            type="button"
+            onClick={() => setMostrarAdmin(true)}
+          >
+            ⚙ Administración
+          </button>
+
+          <a className="boton boton-pequeno boton-carrito" href="#carrito">
+            🛒 Carrito ({cantidadTotal})
+          </a>
+        </div>
       </header>
 
       <main>
@@ -292,7 +333,7 @@ function App() {
                     <button
                       className="boton-eliminar"
                       type="button"
-                      onClick={() => eliminarDelCarrito(item.id)}
+                      onClick={() => eliminarProducto(item.id)}
                     >
                       Eliminar
                     </button>
@@ -369,6 +410,16 @@ function App() {
         <p>Una experiencia inspirada en la naturaleza.</p>
         <span>© {new Date().getFullYear()} MielWeb</span>
       </footer>
+
+      {mostrarAdmin && (
+        <AdminPanel
+          productos={productos}
+          onAgregar={agregarProducto}
+          onActualizar={actualizarProducto}
+          onEliminar={eliminarProducto}
+          onCerrar={() => setMostrarAdmin(false)}
+        />
+      )}
     </>
   );
 }
