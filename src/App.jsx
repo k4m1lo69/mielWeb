@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import "./App.css";
 import AdminPanel from "./components/AdminPanel";
 
@@ -40,8 +40,26 @@ const formatoPrecio = (precio) =>
 
 function App() {
   const [carrito, setCarrito] = useState([]);
-  const [productos, setProductos] = useState(productosIniciales);
+  const [productos, setProductos] = useState(() => {
+    try {
+      const productosGuardados = localStorage.getItem("mielweb_productos");
+
+      return productosGuardados
+        ? JSON.parse(productosGuardados)
+        : productosIniciales;
+    } catch {
+      return productosIniciales;
+    }
+  });
   const [mostrarAdmin, setMostrarAdmin] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("mielweb_productos", JSON.stringify(productos));
+    } catch (error) {
+      console.error("No se pudieron guardar los productos en el navegador:", error);
+    }
+  }, [productos]);
 
   const agregarAlCarrito = (producto) => {
     setCarrito((actual) => {
