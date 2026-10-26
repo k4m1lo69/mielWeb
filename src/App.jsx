@@ -1,35 +1,9 @@
 ﻿import { useEffect, useState } from "react";
 import "./App.css";
 import AdminPanel from "./components/AdminPanel";
+import * as api from "./utils/api";
 
 const WHATSAPP = "56941946907";
-
-const productosIniciales = [
-  {
-    id: 1,
-    nombre: "Miel Multiflora",
-    formato: "500 g",
-    precio: 5000,
-    descripcion: "Miel de flores variadas, ideal para bebidas y postres.",
-    emoji: "🍯",
-  },
-  {
-    id: 2,
-    nombre: "Miel de Ulmo",
-    formato: "500 g",
-    precio: 6000,
-    descripcion: "Miel de aroma intenso y sabor característico.",
-    emoji: "🌿",
-  },
-  {
-    id: 3,
-    nombre: "Miel de Quillay",
-    formato: "500 g",
-    precio: 5500,
-    descripcion: "Una miel de sabor suave para disfrutar cada día.",
-    emoji: "🌼",
-  },
-];
 
 const formatoPrecio = (precio) =>
   precio.toLocaleString("es-CL", {
@@ -40,26 +14,28 @@ const formatoPrecio = (precio) =>
 
 function App() {
   const [carrito, setCarrito] = useState([]);
-  const [productos, setProductos] = useState(() => {
-    try {
-      const productosGuardados = localStorage.getItem("mielweb_productos");
-
-      return productosGuardados
-        ? JSON.parse(productosGuardados)
-        : productosIniciales;
-    } catch {
-      return productosIniciales;
-    }
-  });
+  const [productos, setProductos] = useState([]);
+  const [estadoProductos, setEstadoProductos] = useState("cargando");
   const [mostrarAdmin, setMostrarAdmin] = useState(false);
 
   useEffect(() => {
-    try {
-      localStorage.setItem("mielweb_productos", JSON.stringify(productos));
-    } catch (error) {
-      console.error("No se pudieron guardar los productos en el navegador:", error);
-    }
-  }, [productos]);
+    let activo = true;
+
+    api
+      .obtenerProductos()
+      .then((datos) => {
+        if (!activo) return;
+        setProductos(datos);
+        setEstadoProductos("listo");
+      })
+      .catch(() => {
+        if (activo) setEstadoProductos("error");
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   const agregarAlCarrito = (producto) => {
     setCarrito((actual) => {
@@ -89,36 +65,30 @@ function App() {
     );
   };
 
-  const agregarProducto = (producto) => {
-    setProductos((actuales) => [...actuales, producto]);
+  const agregarProducto = async (producto) => {
+    const creado = await api.crearProducto(producto);
+    setProductos((actuales) => [creado, ...actuales]);
   };
 
-  const actualizarProducto = (productoActualizado) => {
+  const actualizarProducto = async (id, producto) => {
+    const actualizado = await api.actualizarProducto(id, producto);
+
     setProductos((actuales) =>
-      actuales.map((producto) =>
-        producto.id === productoActualizado.id
-          ? productoActualizado
-          : producto
-      )
+      actuales.map((item) => (item.id === actualizado.id ? actualizado : item))
     );
 
     setCarrito((actuales) =>
       actuales.map((item) =>
-        item.id === productoActualizado.id
-          ? { ...item, ...productoActualizado }
-          : item
+        item.id === actualizado.id ? { ...item, ...actualizado } : item
       )
     );
   };
 
-  const eliminarProducto = (id) => {
-    setProductos((actuales) =>
-      actuales.filter((producto) => producto.id !== id)
-    );
+  const eliminarProducto = async (id) => {
+    await api.eliminarProducto(id);
 
-    setCarrito((actuales) =>
-      actuales.filter((item) => item.id !== id)
-    );
+    setProductos((actuales) => actuales.filter((item) => item.id !== id));
+    setCarrito((actuales) => actuales.filter((item) => item.id !== id));
   };
 
   const quitarDelCarrito = (id) => {
@@ -176,14 +146,6 @@ function App() {
         </nav>
 
         <div className="acciones-encabezado">
-          <button
-            className="boton boton-pequeno"
-            type="button"
-            onClick={() => setMostrarAdmin(true)}
-          >
-            ⚙ Administración
-          </button>
-
           <a className="boton boton-pequeno boton-carrito" href="#carrito">
             🛒 Carrito ({cantidadTotal})
           </a>
@@ -261,6 +223,21 @@ function App() {
             <h2>Nuestras mieles</h2>
             <p>Elige tus productos y agrégalos al carrito.</p>
           </div>
+
+          {estadoProductos === "cargando" && (
+            <p className="nota-precios">Cargando productos...</p>
+          )}
+
+          {estadoProductos === "error" && (
+            <p className="nota-precios">
+              No pudimos cargar los productos. Intenta nuevamente en unos
+              minutos.
+            </p>
+          )}
+
+          {estadoProductos === "listo" && productos.length === 0 && (
+            <p className="nota-precios">Pronto agregaremos nuestros productos.</p>
+          )}
 
           <div className="rejilla-productos">
             {productos.map((producto) => (
@@ -431,6 +408,13 @@ function App() {
         </a>
         <p>Una experiencia inspirada en la naturaleza.</p>
         <span>© {new Date().getFullYear()} MielWeb</span>
+        <button
+          className="boton boton-pequeno"
+          type="button"
+          onClick={() => setMostrarAdmin(true)}
+        >
+          Acceso administrador
+        </button>
       </footer>
 
       {mostrarAdmin && (

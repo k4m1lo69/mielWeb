@@ -1,6 +1,16 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./AdminPanel.css";
+import * as api from "../utils/api";
+
+const formularioInicial = {
+  nombre: "",
+  formato: "500 g",
+  precio: "",
+  descripcion: "",
+  emoji: "🍯",
+};
+
+const credencialesIniciales = { email: "", password: "" };
 
 function AdminPanel({
   productos,
@@ -9,17 +19,52 @@ function AdminPanel({
   onEliminar,
   onCerrar,
 }) {
-  const formularioInicial = {
-    nombre: "",
-    formato: "500 g",
-    precio: "",
-    descripcion: "",
-    emoji: "🍯",
-  };
-
+  const [admin, setAdmin] = useState(null);
+  const [verificando, setVerificando] = useState(true);
+  const [credenciales, setCredenciales] = useState(credencialesIniciales);
   const [formulario, setFormulario] = useState(formularioInicial);
   const [idEdicion, setIdEdicion] = useState(null);
   const [mensaje, setMensaje] = useState("");
+  const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => {
+    let activo = true;
+
+    api
+      .obtenerSesion()
+      .then((datos) => {
+        if (activo) setAdmin(datos.admin);
+      })
+      .catch(() => {
+        // Sin sesión activa: se muestra el formulario de ingreso.
+      })
+      .finally(() => {
+        if (activo) setVerificando(false);
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const manejarError = (error) => {
+    if (error.estado === 401) {
+      setAdmin(null);
+      setMensaje("Tu sesión expiró. Inicia sesión nuevamente.");
+      return;
+    }
+
+    setMensaje(error.message);
+  };
+
+  const cambiarCredencial = (evento) => {
+    const { name, value } = evento.target;
+
+    setCredenciales((actual) => ({
+      ...actual,
+      [name]: value,
+    }));
+  };
 
   const cambiarCampo = (evento) => {
     const { name, value } = evento.target;
@@ -36,7 +81,38 @@ function AdminPanel({
     setMensaje("");
   };
 
-  const guardarProducto = (evento) => {
+  const iniciarSesion = async (evento) => {
+    evento.preventDefault();
+    setEnviando(true);
+    setMensaje("");
+
+    try {
+      const datos = await api.iniciarSesion(
+        credenciales.email.trim(),
+        credenciales.password
+      );
+
+      setAdmin(datos.admin);
+      setCredenciales(credencialesIniciales);
+    } catch (error) {
+      setMensaje(error.message);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const cerrarSesion = async () => {
+    try {
+      await api.cerrarSesion();
+    } catch {
+      // Si la sesión ya no era válida, igual se cierra el panel.
+    }
+
+    setAdmin(null);
+    limpiarFormulario();
+  };
+
+  const guardarProducto = async (evento) => {
     evento.preventDefault();
 
     const nombre = formulario.nombre.trim();
@@ -61,19 +137,24 @@ function AdminPanel({
       emoji: formulario.emoji.trim() || "🍯",
     };
 
-    if (idEdicion !== null) {
-      onActualizar({ ...producto, id: idEdicion });
-      setMensaje("Producto actualizado en esta sesión.");
-    } else {
-      onAgregar({
-        ...producto,
-        id: Date.now(),
-      });
-      setMensaje("Producto agregado en esta sesión.");
-    }
+    setEnviando(true);
 
-    setFormulario(formularioInicial);
-    setIdEdicion(null);
+    try {
+      if (idEdicion !== null) {
+        await onActualizar(idEdicion, producto);
+        setMensaje("Producto actualizado.");
+      } else {
+        await onAgregar(producto);
+        setMensaje("Producto agregado.");
+      }
+
+      setFormulario(formularioInicial);
+      setIdEdicion(null);
+    } catch (error) {
+      manejarError(error);
+    } finally {
+      setEnviando(false);
+    }
   };
 
   const editarProducto = (producto) => {
@@ -89,31 +170,75 @@ function AdminPanel({
     setMensaje("");
   };
 
-  return (
-    <div className="admin-fondo">
-      <section className="admin-panel" aria-labelledby="titulo-admin">
-        <div className="admin-encabezado">
-          <div>
-            <span className="etiqueta">GESTIÓN DE LA TIENDA</span>
-            <h2 id="titulo-admin">Panel de administración</h2>
-            <p>Administra los productos de MielWeb.</p>
-          </div>
+  const eliminarProducto = async (producto) => {
+    const confirmar = window.confirm(
+      `¿Eliminar ${producto.nombre} del catálogo?`
+    );
 
-          <button
-            className="admin-cerrar"
-            type="button"
-            onClick={onCerrar}
-          >
-            Volver a la tienda
+    if (!confirmar) return;
+
+    try {
+      await onEliminar(producto.id);
+
+      if (idEdicion === producto.id) {
+        limpiarFormulario();
+      }
+
+      setMensaje("Producto eliminado.");
+    } catch (error) {
+      manejarError(error);
+    }
+  };
+
+  let contenido;
+
+  if (verificando) {
+    contenido = <p className="admin-aviso">Verificando sesión...</p>;
+  } else if (!admin) {
+    contenido = (
+      <form className="admin-formulario" onSubmit={iniciarSesion}>
+        <h3>Iniciar sesión</h3>
+
+        <label>
+          Correo
+          <input
+            name="email"
+            type="email"
+            autoComplete="username"
+            value={credenciales.email}
+            onChange={cambiarCredencial}
+            required
+          />
+        </label>
+
+        <label>
+          Contraseña
+          <input
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={credenciales.password}
+            onChange={cambiarCredencial}
+            required
+          />
+        </label>
+
+        {mensaje && (
+          <p className="admin-mensaje" role="status">
+            {mensaje}
+          </p>
+        )}
+
+        <div className="admin-acciones">
+          <button className="admin-guardar" type="submit" disabled={enviando}>
+            {enviando ? "Ingresando..." : "Ingresar"}
           </button>
         </div>
-
-        <p className="admin-aviso">
-          Versión de prueba: los cambios solo se mantienen en la memoria
-          mientras la página está abierta. Este panel todavía no tiene
-          inicio de sesión ni protección de acceso.
-        </p>
-
+      </form>
+    );
+  } else {
+    contenido = (
+      <>
         <form className="admin-formulario" onSubmit={guardarProducto}>
           <h3>{idEdicion !== null ? "Editar producto" : "Agregar producto"}</h3>
 
@@ -181,7 +306,11 @@ function AdminPanel({
           )}
 
           <div className="admin-acciones">
-            <button className="admin-guardar" type="submit">
+            <button
+              className="admin-guardar"
+              type="submit"
+              disabled={enviando}
+            >
               {idEdicion !== null ? "Guardar cambios" : "Agregar producto"}
             </button>
 
@@ -232,21 +361,7 @@ function AdminPanel({
                   <button
                     className="admin-eliminar"
                     type="button"
-                    onClick={() => {
-                      const confirmar = window.confirm(
-                        `¿Eliminar ${producto.nombre} del catálogo?`
-                      );
-
-                      if (confirmar) {
-                        onEliminar(producto.id);
-
-                        if (idEdicion === producto.id) {
-                          limpiarFormulario();
-                        }
-
-                        setMensaje("Producto eliminado de esta sesión.");
-                      }
-                    }}
+                    onClick={() => eliminarProducto(producto)}
                   >
                     Eliminar
                   </button>
@@ -255,6 +370,42 @@ function AdminPanel({
             ))
           )}
         </div>
+      </>
+    );
+  }
+
+  return (
+    <div className="admin-fondo">
+      <section className="admin-panel" aria-labelledby="titulo-admin">
+        <div className="admin-encabezado">
+          <div>
+            <span className="etiqueta">GESTIÓN DE LA TIENDA</span>
+            <h2 id="titulo-admin">Panel de administración</h2>
+            <p>
+              {admin
+                ? `Sesión iniciada como ${admin.email}.`
+                : "Inicia sesión para administrar los productos."}
+            </p>
+          </div>
+
+          <div>
+            {admin && (
+              <button
+                className="admin-cerrar"
+                type="button"
+                onClick={cerrarSesion}
+              >
+                Cerrar sesión
+              </button>
+            )}
+
+            <button className="admin-cerrar" type="button" onClick={onCerrar}>
+              Volver a la tienda
+            </button>
+          </div>
+        </div>
+
+        {contenido}
       </section>
     </div>
   );
