@@ -103,6 +103,10 @@ function App() {
     );
   };
 
+  const quitarDelCarrito = (id) => {
+    setCarrito((actuales) => actuales.filter((item) => item.id !== id));
+  };
+
   const cantidadTotal = carrito.reduce(
     (total, item) => total + item.cantidad,
     0
@@ -333,7 +337,7 @@ function App() {
                     <button
                       className="boton-eliminar"
                       type="button"
-                      onClick={() => eliminarProducto(item.id)}
+                      onClick={() => quitarDelCarrito(item.id)}
                     >
                       Eliminar
                     </button>
