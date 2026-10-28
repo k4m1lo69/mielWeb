@@ -25,21 +25,14 @@ db.exec(`
     precio INTEGER NOT NULL CHECK (precio > 0),
     descripcion TEXT NOT NULL,
     emoji TEXT NOT NULL DEFAULT '🍯',
+    imagen TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `);
 
-const count = db.prepare("SELECT COUNT(*) AS total FROM products").get().total;
-if (count === 0) {
-  const insert = db.prepare(`
-    INSERT INTO products (nombre, formato, precio, descripcion, emoji)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-  const seed = db.transaction(() => {
-    insert.run("Miel Multiflora", "500 g", 5000, "Miel de flores variadas, ideal para bebidas y postres.", "🍯");
-    insert.run("Miel de Ulmo", "500 g", 6000, "Miel de aroma intenso y sabor característico.", "🌿");
-    insert.run("Miel de Quillay", "500 g", 5500, "Una miel de sabor suave para disfrutar cada día.", "🌼");
-  });
-  seed();
+// Migración: agrega la columna imagen si la base ya existía sin ella.
+const columnasProductos = db.prepare("PRAGMA table_info(products)").all();
+if (!columnasProductos.some((columna) => columna.name === "imagen")) {
+  db.exec("ALTER TABLE products ADD COLUMN imagen TEXT");
 }

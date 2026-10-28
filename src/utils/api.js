@@ -1,13 +1,12 @@
 async function solicitar(ruta, opciones = {}) {
+  const esTexto = typeof opciones.body === "string";
   let respuesta;
 
   try {
     respuesta = await fetch(`/api${ruta}`, {
       credentials: "same-origin",
       ...opciones,
-      headers: opciones.body
-        ? { "Content-Type": "application/json" }
-        : undefined,
+      headers: esTexto ? { "Content-Type": "application/json" } : undefined,
     });
   } catch {
     throw new Error("No se pudo conectar con el servidor.");
@@ -34,6 +33,21 @@ async function solicitar(ruta, opciones = {}) {
   return datos;
 }
 
+function construirFormulario(producto, imagen, quitarImagen) {
+  const datos = new FormData();
+
+  datos.append("nombre", producto.nombre);
+  datos.append("formato", producto.formato);
+  datos.append("precio", String(producto.precio));
+  datos.append("descripcion", producto.descripcion);
+  datos.append("emoji", producto.emoji);
+
+  if (quitarImagen) datos.append("quitarImagen", "1");
+  if (imagen) datos.append("imagen", imagen);
+
+  return datos;
+}
+
 export const obtenerProductos = () => solicitar("/products");
 
 export const obtenerSesion = () => solicitar("/auth/me");
@@ -46,16 +60,21 @@ export const iniciarSesion = (email, password) =>
 
 export const cerrarSesion = () => solicitar("/auth/logout", { method: "POST" });
 
-export const crearProducto = (producto) =>
+export const crearProducto = (producto, imagen = null) =>
   solicitar("/products", {
     method: "POST",
-    body: JSON.stringify(producto),
+    body: construirFormulario(producto, imagen, false),
   });
 
-export const actualizarProducto = (id, producto) =>
+export const actualizarProducto = (
+  id,
+  producto,
+  imagen = null,
+  quitarImagen = false
+) =>
   solicitar(`/products/${id}`, {
     method: "PUT",
-    body: JSON.stringify(producto),
+    body: construirFormulario(producto, imagen, quitarImagen),
   });
 
 export const eliminarProducto = (id) =>

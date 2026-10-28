@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+﻿import { useRef, useState, useEffect } from "react";
 import "./AdminPanel.css";
 import * as api from "../utils/api";
+
+const TIPOS_FOTO = ["image/jpeg", "image/png", "image/webp"];
+const TAMANO_MAXIMO_FOTO = 2 * 1024 * 1024;
 
 const formularioInicial = {
   nombre: "",
@@ -26,6 +29,13 @@ function AdminPanel({
   const [idEdicion, setIdEdicion] = useState(null);
   const [mensaje, setMensaje] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [imagenArchivo, setImagenArchivo] = useState(null);
+  const [vistaPrevia, setVistaPrevia] = useState(null);
+  const [imagenGuardada, setImagenGuardada] = useState(null);
+  const [quitarImagen, setQuitarImagen] = useState(false);
+
+  const inputFotoRef = useRef(null);
+  const vistaPreviaRef = useRef(null);
 
   useEffect(() => {
     let activo = true;
@@ -46,6 +56,29 @@ function AdminPanel({
       activo = false;
     };
   }, []);
+
+  const liberarVistaPrevia = () => {
+    if (vistaPreviaRef.current) {
+      URL.revokeObjectURL(vistaPreviaRef.current);
+      vistaPreviaRef.current = null;
+    }
+
+    setVistaPrevia(null);
+  };
+
+  const vaciarInputFoto = () => {
+    if (inputFotoRef.current) {
+      inputFotoRef.current.value = "";
+    }
+  };
+
+  const reiniciarFoto = () => {
+    liberarVistaPrevia();
+    setImagenArchivo(null);
+    setImagenGuardada(null);
+    setQuitarImagen(false);
+    vaciarInputFoto();
+  };
 
   const manejarError = (error) => {
     if (error.estado === 401) {
@@ -75,10 +108,57 @@ function AdminPanel({
     }));
   };
 
+  const cambiarFoto = (evento) => {
+    const archivo = evento.target.files?.[0];
+
+    if (!archivo) return;
+
+    if (!TIPOS_FOTO.includes(archivo.type)) {
+      setMensaje("La foto debe ser JPG, PNG o WebP.");
+      vaciarInputFoto();
+      return;
+    }
+
+    if (archivo.size > TAMANO_MAXIMO_FOTO) {
+      setMensaje("La foto no debe superar 2 MB.");
+      vaciarInputFoto();
+      return;
+    }
+
+    liberarVistaPrevia();
+
+    const url = URL.createObjectURL(archivo);
+    vistaPreviaRef.current = url;
+
+    setVistaPrevia(url);
+    setImagenArchivo(archivo);
+    setQuitarImagen(false);
+    setMensaje("");
+  };
+
+  const quitarFoto = () => {
+    if (imagenArchivo) {
+      liberarVistaPrevia();
+      setImagenArchivo(null);
+      vaciarInputFoto();
+      return;
+    }
+
+    if (imagenGuardada) {
+      setQuitarImagen(true);
+    }
+  };
+
   const limpiarFormulario = () => {
     setFormulario(formularioInicial);
     setIdEdicion(null);
     setMensaje("");
+    reiniciarFoto();
+  };
+
+  const cerrarPanel = () => {
+    liberarVistaPrevia();
+    onCerrar();
   };
 
   const iniciarSesion = async (evento) => {
@@ -141,15 +221,16 @@ function AdminPanel({
 
     try {
       if (idEdicion !== null) {
-        await onActualizar(idEdicion, producto);
+        await onActualizar(idEdicion, producto, imagenArchivo, quitarImagen);
         setMensaje("Producto actualizado.");
       } else {
-        await onAgregar(producto);
+        await onAgregar(producto, imagenArchivo);
         setMensaje("Producto agregado.");
       }
 
       setFormulario(formularioInicial);
       setIdEdicion(null);
+      reiniciarFoto();
     } catch (error) {
       manejarError(error);
     } finally {
@@ -166,6 +247,8 @@ function AdminPanel({
       emoji: producto.emoji || "🍯",
     });
 
+    reiniciarFoto();
+    setImagenGuardada(producto.imagen || null);
     setIdEdicion(producto.id);
     setMensaje("");
   };
@@ -189,6 +272,9 @@ function AdminPanel({
       manejarError(error);
     }
   };
+
+  const fotoMostrada =
+    vistaPrevia || (imagenGuardada && !quitarImagen ? imagenGuardada : null);
 
   let contenido;
 
@@ -299,6 +385,44 @@ function AdminPanel({
             />
           </label>
 
+          <div className="admin-campo-completo">
+            <label>
+              Foto del producto (opcional)
+              <input
+                ref={inputFotoRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={cambiarFoto}
+              />
+            </label>
+            <span className="admin-foto-ayuda">
+              JPG, PNG o WebP, hasta 2 MB. Si no hay foto, se muestra el emoji.
+            </span>
+
+            {fotoMostrada && (
+              <>
+                <img
+                  className="admin-foto-vista"
+                  src={fotoMostrada}
+                  alt="Vista previa de la foto del producto"
+                />
+                <button
+                  className="admin-quitar-foto"
+                  type="button"
+                  onClick={quitarFoto}
+                >
+                  {vistaPrevia ? "Descartar foto elegida" : "Quitar foto actual"}
+                </button>
+              </>
+            )}
+
+            {quitarImagen && !vistaPrevia && (
+              <span className="admin-foto-ayuda">
+                La foto se quitará al guardar los cambios.
+              </span>
+            )}
+          </div>
+
           {mensaje && (
             <p className="admin-mensaje" role="status">
               {mensaje}
@@ -311,7 +435,11 @@ function AdminPanel({
               type="submit"
               disabled={enviando}
             >
-              {idEdicion !== null ? "Guardar cambios" : "Agregar producto"}
+              {enviando
+                ? "Guardando..."
+                : idEdicion !== null
+                  ? "Guardar cambios"
+                  : "Agregar producto"}
             </button>
 
             {idEdicion !== null && (
@@ -334,9 +462,17 @@ function AdminPanel({
           ) : (
             productos.map((producto) => (
               <article className="admin-producto" key={producto.id}>
-                <span className="admin-producto-emoji" aria-hidden="true">
-                  {producto.emoji || "🍯"}
-                </span>
+                {producto.imagen ? (
+                  <img
+                    className="admin-producto-miniatura"
+                    src={producto.imagen}
+                    alt=""
+                  />
+                ) : (
+                  <span className="admin-producto-emoji" aria-hidden="true">
+                    {producto.emoji || "🍯"}
+                  </span>
+                )}
 
                 <div className="admin-producto-info">
                   <strong>{producto.nombre}</strong>
@@ -399,7 +535,7 @@ function AdminPanel({
               </button>
             )}
 
-            <button className="admin-cerrar" type="button" onClick={onCerrar}>
+            <button className="admin-cerrar" type="button" onClick={cerrarPanel}>
               Volver a la tienda
             </button>
           </div>

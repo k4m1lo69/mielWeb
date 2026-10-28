@@ -65,13 +65,13 @@ function App() {
     );
   };
 
-  const agregarProducto = async (producto) => {
-    const creado = await api.crearProducto(producto);
+  const agregarProducto = async (producto, imagen = null) => {
+    const creado = await api.crearProducto(producto, imagen);
     setProductos((actuales) => [creado, ...actuales]);
   };
 
-  const actualizarProducto = async (id, producto) => {
-    const actualizado = await api.actualizarProducto(id, producto);
+  const actualizarProducto = async (id, producto, imagen = null, quitarImagen = false) => {
+    const actualizado = await api.actualizarProducto(id, producto, imagen, quitarImagen);
 
     setProductos((actuales) =>
       actuales.map((item) => (item.id === actualizado.id ? actualizado : item))
@@ -242,8 +242,12 @@ function App() {
           <div className="rejilla-productos">
             {productos.map((producto) => (
               <article className="tarjeta-producto" key={producto.id}>
-                <div className="producto-imagen" aria-hidden="true">
-                  <span>{producto.emoji}</span>
+                <div className={`producto-imagen ${producto.imagen ? "producto-imagen-con-foto" : ""}`}>
+                  {producto.imagen ? (
+                    <img src={producto.imagen} alt={`Fotografía de ${producto.nombre}`} loading="lazy" />
+                  ) : (
+                    <span aria-hidden="true">{producto.emoji || "🍯"}</span>
+                  )}
                 </div>
 
                 <div className="producto-informacion">
