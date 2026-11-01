@@ -1,0 +1,61 @@
+/* Fotos en las tarjetas de producto */
+.producto-imagen img {
+  display: block;
+  width: 100%;
+  height: 215px;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+
+.tarjeta-producto:hover .producto-imagen img {
+  transform: scale(1.04);
+}
+
+.producto-imagen {
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .producto-imagen img {
+    height: 200px;
+  }
+}
+
+/* Foto en el formulario del panel de administración */
+.admin-foto-ayuda {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.admin-foto-vista {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: 150px;
+  margin-top: 8px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.admin-quitar-foto {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--miel-oscura, #8a5a00);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--miel-oscura, #8a5a00);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Miniatura en la lista de productos del panel */
+.admin-producto-miniatura {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  object-fit: cover;
+}
