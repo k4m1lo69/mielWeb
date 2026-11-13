@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import * as javaApi from "../utils/javaApi";
 import "./SpringBootProductos.css";
 
@@ -14,6 +14,10 @@ const formularioInicial = {
 };
 
 const mensajeError = (error) => {
+  if (!error.response) {
+    return "No se pudo conectar con Spring Boot. Verifica que el servidor Java esté iniciado y vuelve a intentarlo.";
+  }
+
   if (error.response?.status === 401) {
     return "Credenciales incorrectas. Verifica el usuario y contraseña del administrador Java.";
   }
@@ -52,7 +56,7 @@ function SpringBootProductos({ onCerrar, onProductosChange }) {
     setTipoMensaje(tipo);
   };
 
-  const cargarProductos = async () => {
+  const cargarProductos = useCallback(async () => {
     setCargando(true);
 
     try {
@@ -65,11 +69,11 @@ function SpringBootProductos({ onCerrar, onProductosChange }) {
     } finally {
       setCargando(false);
     }
-  };
+  }, [onProductosChange]);
 
   useEffect(() => {
-    cargarProductos();
-  }, []);
+    Promise.resolve().then(cargarProductos);
+  }, [cargarProductos]);
 
   const cambiarCampo = (evento) => {
     const { name, value } = evento.target;
@@ -249,6 +253,7 @@ function SpringBootProductos({ onCerrar, onProductosChange }) {
             className="java-cerrar"
             type="button"
             onClick={onCerrar}
+            disabled={cargando}
             aria-label="Cerrar módulo"
           >
             ×

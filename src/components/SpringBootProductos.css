@@ -1,4 +1,4 @@
-﻿.java-fondo {
+.java-fondo {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -49,6 +49,11 @@
 .java-encabezado p,
 .java-acciones-superiores span {
   color: #706b60;
+}
+
+.java-cerrar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .java-cerrar,
