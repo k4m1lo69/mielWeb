@@ -31,3 +31,17 @@ dist-ssr
 # Archivos locales de herramientas
 .vscode/
 .idea/
+
+# Base de datos local H2 del módulo Java
+backend-java/data/
+
+# Archivos generados por Maven
+/backend-java/target/
+
+# Respaldos locales del modulo Java
+/backend-java/**/*.bak*
+/backend-java/**/*.backup*
+
+# Respaldos locales: nunca versionar
+*.backup-*
+*.bak*
