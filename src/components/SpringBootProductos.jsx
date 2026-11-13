@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import * as javaApi from "../utils/javaApi";
 import "./SpringBootProductos.css";
 
@@ -14,6 +14,10 @@ const formularioInicial = {
 };
 
 const mensajeError = (error) => {
+  if (!error.response) {
+    return "No se pudo conectar con Spring Boot. Verifica que el servidor Java esté iniciado y vuelve a intentarlo.";
+  }
+
   if (error.response?.status === 401) {
     return "Credenciales incorrectas. Verifica el usuario y contraseña del administrador Java.";
   }
@@ -36,7 +40,7 @@ const mensajeError = (error) => {
     "No se pudo completar la operación.";
 };
 
-function SpringBootProductos({ onCerrar }) {
+function SpringBootProductos({ onCerrar, onProductosChange }) {
   const [productos, setProductos] = useState([]);
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
@@ -52,23 +56,24 @@ function SpringBootProductos({ onCerrar }) {
     setTipoMensaje(tipo);
   };
 
-  const cargarProductos = async () => {
+  const cargarProductos = useCallback(async () => {
     setCargando(true);
 
     try {
       const datos = await javaApi.listarProductosJava();
       setProductos(datos);
+      onProductosChange?.(datos);
       mostrarMensaje("Productos cargados desde Spring Boot.", "exito");
     } catch (error) {
       mostrarMensaje(mensajeError(error), "error");
     } finally {
       setCargando(false);
     }
-  };
+  }, [onProductosChange]);
 
   useEffect(() => {
-    cargarProductos();
-  }, []);
+    Promise.resolve().then(cargarProductos);
+  }, [cargarProductos]);
 
   const cambiarCampo = (evento) => {
     const { name, value } = evento.target;
@@ -248,6 +253,7 @@ function SpringBootProductos({ onCerrar }) {
             className="java-cerrar"
             type="button"
             onClick={onCerrar}
+            disabled={cargando}
             aria-label="Cerrar módulo"
           >
             ×

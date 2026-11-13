@@ -45,3 +45,6 @@ backend-java/data/
 # Respaldos locales: nunca versionar
 *.backup-*
 *.bak*
+
+# Base H2 local de la aplicacion Spring Boot
+/data/
