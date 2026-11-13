@@ -36,7 +36,7 @@ const mensajeError = (error) => {
     "No se pudo completar la operación.";
 };
 
-function SpringBootProductos({ onCerrar }) {
+function SpringBootProductos({ onCerrar, onProductosChange }) {
   const [productos, setProductos] = useState([]);
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
@@ -58,6 +58,7 @@ function SpringBootProductos({ onCerrar }) {
     try {
       const datos = await javaApi.listarProductosJava();
       setProductos(datos);
+      onProductosChange?.(datos);
       mostrarMensaje("Productos cargados desde Spring Boot.", "exito");
     } catch (error) {
       mostrarMensaje(mensajeError(error), "error");

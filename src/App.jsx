@@ -1,8 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import "./App.css";
-import AdminPanel from "./components/AdminPanel";
 import SpringBootProductos from "./components/SpringBootProductos";
-import * as api from "./utils/api";
+import { listarProductosJava } from "./utils/javaApi";
 
 const WHATSAPP = "56941946907";
 
@@ -18,19 +17,29 @@ function App() {
   const [productos, setProductos] = useState([]);
   const [estadoProductos, setEstadoProductos] = useState("cargando");
   const [mostrarAdmin, setMostrarAdmin] = useState(false);
-  const [mostrarModuloJava, setMostrarModuloJava] = useState(false);
+
+  const sincronizarProductosJava = (datos) => {
+    setProductos(datos);
+
+    setCarrito((actuales) =>
+      actuales.flatMap((item) => {
+        const actualizado = datos.find((producto) => producto.id === item.id);
+        return actualizado ? [{ ...item, ...actualizado }] : [];
+      })
+    );
+  };
 
   useEffect(() => {
     let activo = true;
 
-    api
-      .obtenerProductos()
+    listarProductosJava()
       .then((datos) => {
         if (!activo) return;
-        setProductos(datos);
+        sincronizarProductosJava(datos);
         setEstadoProductos("listo");
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Error cargando catálogo Spring Boot:", error);
         if (activo) setEstadoProductos("error");
       });
 
@@ -65,32 +74,6 @@ function App() {
         )
         .filter((item) => item.cantidad > 0)
     );
-  };
-
-  const agregarProducto = async (producto, imagen = null) => {
-    const creado = await api.crearProducto(producto, imagen);
-    setProductos((actuales) => [creado, ...actuales]);
-  };
-
-  const actualizarProducto = async (id, producto, imagen = null, quitarImagen = false) => {
-    const actualizado = await api.actualizarProducto(id, producto, imagen, quitarImagen);
-
-    setProductos((actuales) =>
-      actuales.map((item) => (item.id === actualizado.id ? actualizado : item))
-    );
-
-    setCarrito((actuales) =>
-      actuales.map((item) =>
-        item.id === actualizado.id ? { ...item, ...actualizado } : item
-      )
-    );
-  };
-
-  const eliminarProducto = async (id) => {
-    await api.eliminarProducto(id);
-
-    setProductos((actuales) => actuales.filter((item) => item.id !== id));
-    setCarrito((actuales) => actuales.filter((item) => item.id !== id));
   };
 
   const quitarDelCarrito = (id) => {
@@ -420,26 +403,13 @@ function App() {
           onClick={() => setMostrarAdmin(true)}
         >
           Acceso administrador
-        </button>        <button
-          className="boton boton-pequeno"
-          type="button"
-          onClick={() => setMostrarModuloJava(true)}
-        >
-          CRUD académico Spring Boot
         </button>
       </footer>
 
       {mostrarAdmin && (
-        <AdminPanel
-          productos={productos}
-          onAgregar={agregarProducto}
-          onActualizar={actualizarProducto}
-          onEliminar={eliminarProducto}
-          onCerrar={() => setMostrarAdmin(false)}
-        />
-      )}      {mostrarModuloJava && (
         <SpringBootProductos
-          onCerrar={() => setMostrarModuloJava(false)}
+          onProductosChange={sincronizarProductosJava}
+          onCerrar={() => setMostrarAdmin(false)}
         />
       )}
     </>
