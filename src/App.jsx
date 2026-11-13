@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import "./App.css";
 import AdminPanel from "./components/AdminPanel";
+import SpringBootProductos from "./components/SpringBootProductos";
 import * as api from "./utils/api";
 
 const WHATSAPP = "56941946907";
@@ -17,6 +18,7 @@ function App() {
   const [productos, setProductos] = useState([]);
   const [estadoProductos, setEstadoProductos] = useState("cargando");
   const [mostrarAdmin, setMostrarAdmin] = useState(false);
+  const [mostrarModuloJava, setMostrarModuloJava] = useState(false);
 
   useEffect(() => {
     let activo = true;
@@ -418,6 +420,12 @@ function App() {
           onClick={() => setMostrarAdmin(true)}
         >
           Acceso administrador
+        </button>        <button
+          className="boton boton-pequeno"
+          type="button"
+          onClick={() => setMostrarModuloJava(true)}
+        >
+          CRUD académico Spring Boot
         </button>
       </footer>
 
@@ -428,6 +436,10 @@ function App() {
           onActualizar={actualizarProducto}
           onEliminar={eliminarProducto}
           onCerrar={() => setMostrarAdmin(false)}
+        />
+      )}      {mostrarModuloJava && (
+        <SpringBootProductos
+          onCerrar={() => setMostrarModuloJava(false)}
         />
       )}
     </>

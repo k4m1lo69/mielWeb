@@ -1,0 +1,290 @@
+﻿.java-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 24px;
+  background: rgba(25, 30, 20, 0.72);
+}
+
+.java-panel {
+  width: min(1180px, 100%);
+  margin: 20px auto;
+  padding: 28px;
+  border-radius: 18px;
+  background: #fffdf8;
+  color: #302b20;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.25);
+}
+
+.java-encabezado,
+.java-acciones-superiores,
+.java-modal-encabezado,
+.java-modal-acciones,
+.java-botones,
+.java-acciones-fila,
+.java-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.java-encabezado {
+  margin-bottom: 22px;
+}
+
+.java-etiqueta {
+  color: #98702a;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.java-encabezado h2 {
+  margin: 7px 0;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.java-encabezado p,
+.java-acciones-superiores span {
+  color: #706b60;
+}
+
+.java-cerrar,
+.java-modal-encabezado button {
+  border: 0;
+  background: transparent;
+  color: #514a3c;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.java-credenciales {
+  padding: 18px;
+  border: 1px solid #e8dfcc;
+  border-radius: 12px;
+  background: #faf6eb;
+}
+
+.java-credenciales h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.java-credenciales-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.java-credenciales label,
+.java-formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 650;
+  font-size: 0.9rem;
+}
+
+.java-credenciales input,
+.java-formulario input,
+.java-formulario textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d8d0c1;
+  border-radius: 8px;
+  background: white;
+  color: #302b20;
+  font: inherit;
+}
+
+.java-credenciales small {
+  display: block;
+  margin-top: 10px;
+  color: #706b60;
+}
+
+.java-mensaje {
+  padding: 11px 14px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+}
+
+.java-mensaje-exito {
+  background: #eaf5e8;
+  color: #285b2c;
+}
+
+.java-mensaje-error {
+  background: #fbe9e6;
+  color: #8b2921;
+}
+
+.java-mensaje-info {
+  background: #edf2f7;
+  color: #344b64;
+}
+
+.java-acciones-superiores {
+  margin: 24px 0 14px;
+  flex-wrap: wrap;
+}
+
+.java-acciones-superiores h3 {
+  margin: 0 0 5px;
+}
+
+.java-boton {
+  padding: 10px 15px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.java-boton:disabled,
+.java-acciones-fila button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.java-boton-principal {
+  background: #936b25;
+  color: white;
+}
+
+.java-boton-secundario {
+  background: #eee8dc;
+  color: #40392d;
+}
+
+.java-tabla-contenedor {
+  overflow-x: auto;
+}
+
+.java-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.java-tabla th,
+.java-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e9e2d6;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.java-tabla th {
+  background: #f4efe4;
+  color: #51442e;
+}
+
+.java-nombre-producto {
+  font-weight: 750;
+}
+
+.java-acciones-fila button {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #e9dfc9;
+  color: #44371e;
+  cursor: pointer;
+}
+
+.java-acciones-fila .java-eliminar {
+  background: #f6e4e1;
+  color: #8b2921;
+}
+
+.java-vacio {
+  padding: 24px !important;
+  color: #706b60;
+  text-align: center !important;
+}
+
+.java-pie {
+  margin-top: 18px;
+  color: #777064;
+  font-size: 0.8rem;
+}
+
+.java-modal-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1010;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.java-modal {
+  width: min(600px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 15px;
+  background: #fffdf8;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+}
+
+.java-modal-encabezado {
+  margin-bottom: 20px;
+}
+
+.java-modal-encabezado h3 {
+  margin: 0;
+}
+
+.java-formulario {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.java-campo-completo {
+  grid-column: 1 / -1;
+}
+
+.java-modal-acciones {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+@media (max-width: 650px) {
+  .java-fondo {
+    padding: 8px;
+  }
+
+  .java-panel {
+    margin: 4px auto;
+    padding: 17px;
+  }
+
+  .java-credenciales-campos,
+  .java-formulario {
+    grid-template-columns: 1fr;
+  }
+
+  .java-campo-completo {
+    grid-column: auto;
+  }
+
+  .java-acciones-superiores,
+  .java-botones,
+  .java-pie {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .java-botones button {
+    width: 100%;
+  }
+}
